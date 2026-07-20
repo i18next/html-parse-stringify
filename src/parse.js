@@ -24,10 +24,15 @@ export default function parse(html, options) {
     })
   }
 
-  const matches = Array.from(html.matchAll(tagRE))
+  // collect matches with an exec loop instead of matchAll to keep ES5 API compat
+  const matches = []
+  let m
+  while ((m = tagRE.exec(html))) {
+    matches.push(m)
+  }
   matches.forEach(function (match, i) {
     const tag = match[0]
-    if (!tag) return console.log({ html, matches })
+    if (!tag) return
     const amountOfLts = tag.split('<').length
     const amountOfGts = tag.split('>').length
     if (amountOfLts > 0 && amountOfLts > amountOfGts) {
@@ -54,11 +59,11 @@ export default function parse(html, options) {
     const nextChar = html.charAt(start)
     const nextMatch = matches[i + 1]
     let isText
-    if (nextChar === '<' && nextMatch)  {
+    if (nextChar === '<' && nextMatch) {
       const nextTag = html.substring(start, nextMatch.index)
-      isText = nextTag.split('<').length >  nextTag.split('>').length
+      isText = nextTag.split('<').length > nextTag.split('>').length
     }
-    
+
     let parent
 
     if (isComment) {
@@ -72,11 +77,11 @@ export default function parse(html, options) {
       parent = arr[level]
       parent.children.push(comment)
 
-      const text = html.slice(start, html.indexOf('<', start));
+      const text = html.slice(start, html.indexOf('<', start))
       if (text.length > 0) {
         parent.children.push({
           type: 'text',
-          content: text
+          content: text,
         })
       }
       return result
@@ -99,11 +104,15 @@ export default function parse(html, options) {
       ) {
         let possibleContent = html.slice(start, html.indexOf('<', start))
         const indexOfPossibleContent = html.indexOf(possibleContent, start)
-        const startAfterPossibleContent = indexOfPossibleContent + possibleContent.length + 1
+        const startAfterPossibleContent =
+          indexOfPossibleContent + possibleContent.length + 1
         const nextLt = html.indexOf('<', startAfterPossibleContent)
         const nextGt = html.indexOf('>', startAfterPossibleContent)
         if (nextLt > -1 && nextLt < nextGt) {
-          possibleContent = html.slice(start, html.indexOf('<', startAfterPossibleContent))
+          possibleContent = html.slice(
+            start,
+            html.indexOf('<', startAfterPossibleContent)
+          )
         }
         current.children.push({
           type: 'text',

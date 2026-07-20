@@ -227,30 +227,31 @@ test('parse', function (t) {
   ])
   t.equal(html, HTML.stringify(parsed))
 
-  html = '<div> <!-- First comment --> <span>Hi</span> <!-- Another comment --> Something</div>'
+  html =
+    '<div> <!-- First comment --> <span>Hi</span> <!-- Another comment --> Something</div>'
   parsed = HTML.parse(html)
   t.deepEqual(parsed, [
     {
-      type: "tag",
-      name: "div",
+      type: 'tag',
+      name: 'div',
       voidElement: false,
       attrs: {},
       children: [
-        { type: "text", content: " " },
-        { type: "comment", comment: " First comment " },
-        { type: "text", content: " " },
+        { type: 'text', content: ' ' },
+        { type: 'comment', comment: ' First comment ' },
+        { type: 'text', content: ' ' },
         {
-          type: "tag",
-          name: "span",
+          type: 'tag',
+          name: 'span',
           voidElement: false,
           attrs: {},
-          children: [{ type: "text", content: "Hi" }],
+          children: [{ type: 'text', content: 'Hi' }],
         },
-        { type: "text", content: " " },
-        { type: "comment", comment: " Another comment " },
-        { type: "text", content: " Something" },
+        { type: 'text', content: ' ' },
+        { type: 'comment', comment: ' Another comment ' },
+        { type: 'text', content: ' Something' },
       ],
-    }
+    },
   ])
 
   html = '<div>oh <strong>hello</strong> there! How are <span>you</span>?</div>'
@@ -750,7 +751,7 @@ test('parse', function (t) {
         children: [
           {
             content:
-              "\n      !function() {\n        var cookies = document.cookie ? document.cookie.split(';') : [];\n        //                |   this less than is triggering probems\n        for (var i = 0; i < cookies.length; i++) {\n          var splitted = cookies[i].split(\'=\');\n          var name = splitted[0];\n        }\n      }();\n      ",
+              "\n      !function() {\n        var cookies = document.cookie ? document.cookie.split(';') : [];\n        //                |   this less than is triggering probems\n        for (var i = 0; i < cookies.length; i++) {\n          var splitted = cookies[i].split('=');\n          var name = splitted[0];\n        }\n      }();\n      ",
             type: 'text',
           },
         ],
@@ -876,7 +877,7 @@ test('simple speed sanity check', function (t) {
       total += stepAverage
       waitCount = waitLoopSize
       // forcing a bit of a pause between tests
-      while (waitCount--) { }
+      while (waitCount--) {}
     }
   }
 
@@ -916,48 +917,57 @@ test('ReDoS vulnerability reported by Sam Sanoop of Snyk', function (t) {
 test('whitespace', function (t) {
   let html = '<div></div>\n'
   let parsed = HTML.parse(html)
-  t.deepEqual(parsed, [{
-    type: 'tag',
-    name: 'div',
-    attrs: {},
-    voidElement: false,
-    children: []
-  }], 'should not explode on trailing whitespace')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: {},
+        voidElement: false,
+        children: [],
+      },
+    ],
+    'should not explode on trailing whitespace'
+  )
 
   html = '<div>Hi</div>\n\n <span>There</span> \t <div> </div>'
   parsed = HTML.parse(html)
-  t.deepEqual(parsed, [{
-    type: 'tag',
-    name: 'div',
-    attrs: {},
-    voidElement: false,
-    children: [
-      { type: 'text', content: 'Hi' }
-    ]
-  }, {
-    type: 'text',
-    content: ' '
-  },
-  {
-    type: 'tag',
-    name: 'span',
-    attrs: {},
-    voidElement: false,
-    children: [
-      { type: 'text', content: 'There' }
-    ]
-  }, {
-    type: 'text',
-    content: ' '
-  }, {
-    type: 'tag',
-    name: 'div',
-    attrs: {},
-    voidElement: false,
-    children: [
-      { type: 'text', content: ' ' }
-    ]
-  }], 'should collapse whitespace')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: 'Hi' }],
+      },
+      {
+        type: 'text',
+        content: ' ',
+      },
+      {
+        type: 'tag',
+        name: 'span',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: 'There' }],
+      },
+      {
+        type: 'text',
+        content: ' ',
+      },
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: ' ' }],
+      },
+    ],
+    'should collapse whitespace'
+  )
   // See https://www.w3.org/TR/html4/struct/text.html#h-9.1
 
   t.end()
@@ -966,112 +976,124 @@ test('whitespace', function (t) {
 test('uppercase tags', function (t) {
   const html = '<0>click <Link>here</Link> for more</0>'
   const parsed = HTML.parse(html)
-  t.deepEqual(parsed, [
-    {
-      "type": "tag",
-      "name": "0",
-      "voidElement": false,
-      "attrs": {},
-      "children": [
-        {
-          "type": "text",
-          "content": "click "
-        },
-        {
-          "type": "tag",
-          "name": "Link",
-          "voidElement": false,
-          "attrs": {},
-          "children": [
-            {
-              "type": "text",
-              "content": "here"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "content": " for more"
-        }
-      ]
-    }
-  ], 'should handle uppercase tags correctly')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: '0',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'click ',
+          },
+          {
+            type: 'tag',
+            name: 'Link',
+            voidElement: false,
+            attrs: {},
+            children: [
+              {
+                type: 'text',
+                content: 'here',
+              },
+            ],
+          },
+          {
+            type: 'text',
+            content: ' for more',
+          },
+        ],
+      },
+    ],
+    'should handle uppercase tags correctly'
+  )
   t.end()
 })
 
 test('open tag in html string', function (t) {
   const html = '<0>hello under <10 <div>under 10</div> ok?</0>'
   const parsed = HTML.parse(html)
-  t.deepEqual(parsed, [
-    {
-      "type": "tag",
-      "name": "0",
-      "voidElement": false,
-      "attrs": {},
-      "children": [
-        {
-          "type": "text",
-          "content": "hello under <10 "
-        },
-        {
-          "type": "tag",
-          "name": "div",
-          "voidElement": false,
-          "attrs": {},
-          "children": [
-            {
-              "type": "text",
-              "content": "under 10"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "content": " ok?"
-        }
-      ]
-    }
-  ], 'should handle uppercase tags correctly')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: '0',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'hello under <10 ',
+          },
+          {
+            type: 'tag',
+            name: 'div',
+            voidElement: false,
+            attrs: {},
+            children: [
+              {
+                type: 'text',
+                content: 'under 10',
+              },
+            ],
+          },
+          {
+            type: 'text',
+            content: ' ok?',
+          },
+        ],
+      },
+    ],
+    'should handle uppercase tags correctly'
+  )
   t.end()
 })
 
-
 test('open tag in html string complex', function (t) {
-  const html = 'hello <italic>under ten</italic><10 this text after the sign should be rendered<bold>END</bold>'
+  const html =
+    'hello <italic>under ten</italic><10 this text after the sign should be rendered<bold>END</bold>'
   const parsed = HTML.parse(html)
-  t.deepEqual(parsed, [
-    {
-      "type": "text",
-      "content": "hello "
-    },
-    {
-      "type": "tag",
-      "name": "italic",
-      "voidElement": false,
-      "attrs": {},
-      "children": [
-        {
-          "type": "text",
-          "content": "under ten"
-        }
-      ]
-    },
-    {
-      "type": "text",
-      "content": "<10 this text after the sign should be rendered"
-    },
-    {
-      "type": "tag",
-      "name": "bold",
-      "voidElement": false,
-      "attrs": {},
-      "children": [
-        {
-          "type": "text",
-          "content": "END"
-        }
-      ]
-    }
-  ], 'should handle uppercase tags correctly')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'text',
+        content: 'hello ',
+      },
+      {
+        type: 'tag',
+        name: 'italic',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'under ten',
+          },
+        ],
+      },
+      {
+        type: 'text',
+        content: '<10 this text after the sign should be rendered',
+      },
+      {
+        type: 'tag',
+        name: 'bold',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'END',
+          },
+        ],
+      },
+    ],
+    'should handle uppercase tags correctly'
+  )
   t.end()
 })

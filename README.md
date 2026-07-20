@@ -1,5 +1,7 @@
 # html-parse-stringify
 
+> **Note:** development of this package continues at [i18next/html-parse-stringify](https://github.com/i18next/html-parse-stringify), where version 4.x and later are maintained. 3.1.0 is the final release from this repository; the npm package name stays `html-parse-stringify`. See [issue #65](https://github.com/HenrikJoreteg/html-parse-stringify/issues/65) for the background.
+
 This is an _experimental lightweight approach_ to enable quickly parsing HTML into an AST and stringify'ing it back to the original string.
 
 As it turns out, if you can make a the simplifying assumptions about HTML that all tags must be closed or self-closing. Which is OK for _this_ particular application. You can write a super light/fast parser in JS with regex.
@@ -135,6 +137,7 @@ properties:
 
 ## changelog
 
+- `3.1.0` Maintenance release, merging long-standing community PRs: LICENSE file shipped in the npm package (#66 by @monholm, closes #61), text containing `<` no longer truncated (#64, closes #59), multi-line attribute values (#63 by @steffanhalv, closes #62), TypeScript declaration shipped and improved (#51/#52 by @jiangfengming, closes #56), text after comment nodes no longer discarded (#53 by @tohosaku). Development continues at [i18next/html-parse-stringify](https://github.com/i18next/html-parse-stringify).
 - `3.0.1` Merged #47 which makes void elements check case insensitive. Thanks again, [@adrai](https://github.com/adrai) for this contribution!
 - `3.0.0` Merged #46 which fixed an issue with handling of whitespace. Doing major version bump since this changes behavior if you have whitespace only nodes (see merged PR and #45 for more details). Thanks [@adrai](https://github.com/adrai) for this contribution!
 - `2.1.1` Merged #41 which fixed an issue with tag nesting. Thanks [@ericponto](https://github.com/ericponto).
