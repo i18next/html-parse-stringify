@@ -724,7 +724,7 @@ test('parse', function (t) {
         children: [
           {
             content:
-              "\n      !function() {\n        var cookies = document.cookie ? document.cookie.split(';') : [];\n        //                |   this less than is triggering probems\n        for (var i = 0; i ",
+              "\n      !function() {\n        var cookies = document.cookie ? document.cookie.split(';') : [];\n        //                |   this less than is triggering probems\n        for (var i = 0; i < cookies.length; i++) {\n          var splitted = cookies[i].split(\'=\');\n          var name = splitted[0];\n        }\n      }();\n      ",
             type: 'text',
           },
         ],
@@ -966,6 +966,83 @@ test('uppercase tags', function (t) {
         {
           "type": "text",
           "content": " for more"
+        }
+      ]
+    }
+  ], 'should handle uppercase tags correctly')
+  t.end()
+})
+
+test('open tag in html string', function (t) {
+  const html = '<0>hello under <10 <div>under 10</div> ok?</0>'
+  const parsed = HTML.parse(html)
+  t.deepEqual(parsed, [
+    {
+      "type": "tag",
+      "name": "0",
+      "voidElement": false,
+      "attrs": {},
+      "children": [
+        {
+          "type": "text",
+          "content": "hello under <10 "
+        },
+        {
+          "type": "tag",
+          "name": "div",
+          "voidElement": false,
+          "attrs": {},
+          "children": [
+            {
+              "type": "text",
+              "content": "under 10"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "content": " ok?"
+        }
+      ]
+    }
+  ], 'should handle uppercase tags correctly')
+  t.end()
+})
+
+
+test('open tag in html string complex', function (t) {
+  const html = 'hello <italic>under ten</italic><10 this text after the sign should be rendered<bold>END</bold>'
+  const parsed = HTML.parse(html)
+  t.deepEqual(parsed, [
+    {
+      "type": "text",
+      "content": "hello "
+    },
+    {
+      "type": "tag",
+      "name": "italic",
+      "voidElement": false,
+      "attrs": {},
+      "children": [
+        {
+          "type": "text",
+          "content": "under ten"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "content": "<10 this text after the sign should be rendered"
+    },
+    {
+      "type": "tag",
+      "name": "bold",
+      "voidElement": false,
+      "attrs": {},
+      "children": [
+        {
+          "type": "text",
+          "content": "END"
         }
       ]
     }

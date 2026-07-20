@@ -24,7 +24,23 @@ export default function parse(html, options) {
     })
   }
 
-  html.replace(tagRE, function (tag, index) {
+  const matches = Array.from(html.matchAll(tagRE))
+  matches.forEach(function (match, i) {
+    const tag = match[0]
+    if (!tag) return console.log({ html, matches })
+    const amountOfLts = tag.split('<').length
+    const amountOfGts = tag.split('>').length
+    if (amountOfLts > 0 && amountOfLts > amountOfGts) {
+      const firstPart = tag.substring(0, tag.indexOf('<', tag.indexOf('<') + 1))
+      const secondPart = tag.substring(firstPart.length)
+      matches[i][0] = secondPart
+      matches[i].index += firstPart.length
+    }
+  })
+  matches.forEach(function (match, i) {
+    const tag = match[0]
+    if (!tag) return
+    const index = match.index
     if (inComponent) {
       if (tag !== '</' + current.name + '>') {
         return
@@ -36,6 +52,13 @@ export default function parse(html, options) {
     const isComment = tag.startsWith('<!--')
     const start = index + tag.length
     const nextChar = html.charAt(start)
+    const nextMatch = matches[i + 1]
+    let isText
+    if (nextChar === '<' && nextMatch)  {
+      const nextTag = html.substring(start, nextMatch.index)
+      isText = nextTag.split('<').length >  nextTag.split('>').length
+    }
+    
     let parent
 
     if (isComment) {
@@ -66,9 +89,17 @@ export default function parse(html, options) {
         nextChar &&
         nextChar !== '<'
       ) {
+        let possibleContent = html.slice(start, html.indexOf('<', start))
+        const indexOfPossibleContent = html.indexOf(possibleContent, start)
+        const startAfterPossibleContent = indexOfPossibleContent + possibleContent.length + 1
+        const nextLt = html.indexOf('<', startAfterPossibleContent)
+        const nextGt = html.indexOf('>', startAfterPossibleContent)
+        if (nextLt > -1 && nextLt < nextGt) {
+          possibleContent = html.slice(start, html.indexOf('<', startAfterPossibleContent))
+        }
         current.children.push({
           type: 'text',
-          content: html.slice(start, html.indexOf('<', start)),
+          content: possibleContent,
         })
       }
 
@@ -95,7 +126,7 @@ export default function parse(html, options) {
         // move current up a level to match the end tag
         current = level === -1 ? result : arr[level]
       }
-      if (!inComponent && nextChar !== '<' && nextChar) {
+      if (!inComponent && (nextChar !== '<' || isText) && nextChar) {
         // trailing text node
         // if we're at the root, push a base text node. otherwise add as
         // a child to the current node.
@@ -103,7 +134,11 @@ export default function parse(html, options) {
 
         // calculate correct end of the content slice in case there's
         // no tag after the text node.
-        const end = html.indexOf('<', start)
+        let end = html.indexOf('<', start)
+        if (isText) {
+          const nextTag = html.substring(nextMatch.index)
+          end = html.indexOf(nextTag, start)
+        }
         let content = html.slice(start, end === -1 ? undefined : end)
         // if a node is nothing but whitespace, collapse it as the spec states:
         // https://www.w3.org/TR/html4/struct/text.html#h-9.1
