@@ -1048,7 +1048,7 @@ test('open tag in html string', function (t) {
         ],
       },
     ],
-    'should handle uppercase tags correctly'
+    'should keep text containing < as text content'
   )
   t.end()
 })
@@ -1093,7 +1093,7 @@ test('open tag in html string complex', function (t) {
         ],
       },
     ],
-    'should handle uppercase tags correctly'
+    'should treat <10 followed by text as text, not as a tag'
   )
   t.end()
 })
