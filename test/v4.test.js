@@ -229,3 +229,20 @@ test('pathological split fragments must not crash (#67 fuzz)', () => {
   expect(() => parse("</0><3 a < b <!-- c -->=<div -->'")).not.toThrow()
   expect(() => parse('<div>a<b<c<d</div>')).not.toThrow()
 })
+
+test('allowedTags: valid tag glued behind stray < is still recognized (react-i18next #1880 shape)', () => {
+  const ast = parse('Values: <10, <20, and <bold>50</bold> are less than 100', {
+    allowedTags: ['bold'],
+  })
+  expect(ast).toEqual([
+    { type: 'text', content: 'Values: <10, <20, and ' },
+    {
+      type: 'tag',
+      name: 'bold',
+      voidElement: false,
+      attrs: {},
+      children: [{ type: 'text', content: '50' }],
+    },
+    { type: 'text', content: ' are less than 100' },
+  ])
+})

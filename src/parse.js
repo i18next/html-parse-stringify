@@ -49,14 +49,29 @@ export default function parse(html, options) {
         : function (name) {
             return allowedTags.indexOf(name) > -1
           }
-    // neutralize tags whose name is not allowed, so they parse as text
-    html = html.replace(tagRE, function (tag) {
-      if (tag.startsWith('<!--')) return tag
+    // neutralize tags whose name is not allowed, so they parse as text.
+    // on a disallowed match only the leading `<` is escaped and scanning
+    // resumes right after it, so a valid tag glued into the same match
+    // (e.g. `<bold>` inside `<10, <20, and <bold>`) still gets recognized
+    let out = ''
+    let pos = 0
+    tagRE.lastIndex = 0
+    let am
+    while ((am = tagRE.exec(html))) {
+      const tag = am[0]
+      out += html.slice(pos, am.index)
       const nameMatch = tag.match(tagNameRE)
-      if (nameMatch && isAllowed(nameMatch[1])) return tag
-      restoreNeeded = true
-      return tag.split('<').join(sentinel)
-    })
+      if (tag.startsWith('<!--') || (nameMatch && isAllowed(nameMatch[1]))) {
+        out += tag
+        pos = am.index + tag.length
+      } else {
+        restoreNeeded = true
+        out += sentinel
+        pos = am.index + 1
+        tagRE.lastIndex = pos
+      }
+    }
+    html = out + html.slice(pos)
   }
   const result = []
   const arr = []

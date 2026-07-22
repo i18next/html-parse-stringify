@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.1
+
+### Fixed
+
+- `allowedTags`: when a stray `<` and a valid tag ended up in the same raw match (e.g. `Values: <10, <20, and <bold>x</bold>`), the whole match was treated as text and the valid tag was lost. Now only the leading `<` of a disallowed match is neutralized and scanning resumes, so glued valid tags are recognized.
+
 ## 4.0.0
 
 First release from the package's new maintenance home: [i18next/html-parse-stringify](https://github.com/i18next/html-parse-stringify). Functionally it builds on 3.1.0; the breaking changes below are deliberate and small.
