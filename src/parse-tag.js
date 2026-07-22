@@ -1,5 +1,5 @@
 import lookup from 'void-elements'
-const attrRE = /\s([^'"/\s><]+?)[\s/>]|([^\s=]+)=\s?(".*?"|'.*?')/g
+const attrRE = /\s([^'"/\s><]+?)[\s/>]|([^\s=]+)=\s?("[^"]*"|'[^']*')/g
 
 export default function stringify(tag) {
   const res = {
@@ -13,10 +13,7 @@ export default function stringify(tag) {
   const tagMatch = tag.match(/<\/?([^\s]+?)[/\s>]/)
   if (tagMatch) {
     res.name = tagMatch[1]
-    if (
-      lookup[tagMatch[1]] ||
-      tag.charAt(tag.length - 2) === '/'
-    ) {
+    if (lookup[tagMatch[1]] || tag.charAt(tag.length - 2) === '/') {
       res.voidElement = true
     }
 

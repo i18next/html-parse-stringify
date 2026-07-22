@@ -1,27 +1,43 @@
-declare var htmlParseStringify: htmlParseStringify.htmlParseStringify
-
-declare module htmlParseStringify {
-  export interface htmlParseStringify {
-    new (): htmlParseStringify
-    parse_tag(tag: string): IDoc
-    parse(html: string, options: IOptions): Array<any>
-    stringify(doc: IDoc): string
-  }
-
-  export interface IDoc {
-    type: string
-    content?: string
-    voidElement: boolean
-    name: string
-    attrs: {}
-    children: IDoc[]
-  }
-
-  export interface IOptions {
-    components: string[]
-  }
-}
-
 declare module 'html-parse-stringify' {
-  export = htmlParseStringify
+  namespace HTML {
+    interface TagNode {
+      type: 'tag';
+      name: string;
+      voidElement: boolean;
+      attrs: Record<string, string | undefined>;
+      children: Node[];
+    }
+
+    interface TextNode {
+      type: 'text';
+      content: string;
+    }
+
+    interface CommentNode {
+      type: 'comment';
+      comment: string;
+    }
+
+    interface ComponentNode {
+      type: 'component';
+      name: string;
+      attrs: Record<string, string | undefined>;
+      voidElement: boolean;
+      children: [];
+    }
+
+    type Node = TagNode | TextNode | CommentNode | ComponentNode;
+
+    interface ParseOptions {
+      components?: Record<string, boolean>;
+    }
+
+    function parse(html: string, options?: ParseOptions): Node[];
+    function stringify(doc: Node[]): string;
+  }
+
+  // the CommonJS build assigns `module.exports = { parse, stringify }` with
+  // no `default` property, so `export =` is the only declaration shape that
+  // is correct both with and without esModuleInterop
+  export = HTML;
 }

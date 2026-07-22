@@ -227,6 +227,33 @@ test('parse', function (t) {
   ])
   t.equal(html, HTML.stringify(parsed))
 
+  html =
+    '<div> <!-- First comment --> <span>Hi</span> <!-- Another comment --> Something</div>'
+  parsed = HTML.parse(html)
+  t.deepEqual(parsed, [
+    {
+      type: 'tag',
+      name: 'div',
+      voidElement: false,
+      attrs: {},
+      children: [
+        { type: 'text', content: ' ' },
+        { type: 'comment', comment: ' First comment ' },
+        { type: 'text', content: ' ' },
+        {
+          type: 'tag',
+          name: 'span',
+          voidElement: false,
+          attrs: {},
+          children: [{ type: 'text', content: 'Hi' }],
+        },
+        { type: 'text', content: ' ' },
+        { type: 'comment', comment: ' Another comment ' },
+        { type: 'text', content: ' Something' },
+      ],
+    },
+  ])
+
   html = '<div>oh <strong>hello</strong> there! How are <span>you</span>?</div>'
   parsed = HTML.parse(html)
 
@@ -724,7 +751,7 @@ test('parse', function (t) {
         children: [
           {
             content:
-              "\n      !function() {\n        var cookies = document.cookie ? document.cookie.split(';') : [];\n        //                |   this less than is triggering probems\n        for (var i = 0; i ",
+              "\n      !function() {\n        var cookies = document.cookie ? document.cookie.split(';') : [];\n        //                |   this less than is triggering probems\n        for (var i = 0; i < cookies.length; i++) {\n          var splitted = cookies[i].split('=');\n          var name = splitted[0];\n        }\n      }();\n      ",
             type: 'text',
           },
         ],
@@ -890,48 +917,57 @@ test('ReDoS vulnerability reported by Sam Sanoop of Snyk', function (t) {
 test('whitespace', function (t) {
   let html = '<div></div>\n'
   let parsed = HTML.parse(html)
-  t.deepEqual(parsed, [{
-    type: 'tag',
-    name: 'div',
-    attrs: {},
-    voidElement: false,
-    children: []
-  }], 'should not explode on trailing whitespace')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: {},
+        voidElement: false,
+        children: [],
+      },
+    ],
+    'should not explode on trailing whitespace'
+  )
 
   html = '<div>Hi</div>\n\n <span>There</span> \t <div> </div>'
   parsed = HTML.parse(html)
-  t.deepEqual(parsed, [{
-    type: 'tag',
-    name: 'div',
-    attrs: {},
-    voidElement: false,
-    children: [
-      { type: 'text', content: 'Hi' }
-    ]
-  },{
-    type: 'text',
-    content: ' '
-  },
-  {
-    type: 'tag',
-    name: 'span',
-    attrs: {},
-    voidElement: false,
-    children: [
-      { type: 'text', content: 'There' }
-    ]
-  },{
-    type: 'text',
-    content: ' '
-  },{
-    type: 'tag',
-    name: 'div',
-    attrs: {},
-    voidElement: false,
-    children: [
-      { type: 'text', content: ' ' }
-    ]
-  }], 'should collapse whitespace')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: 'Hi' }],
+      },
+      {
+        type: 'text',
+        content: ' ',
+      },
+      {
+        type: 'tag',
+        name: 'span',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: 'There' }],
+      },
+      {
+        type: 'text',
+        content: ' ',
+      },
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: ' ' }],
+      },
+    ],
+    'should collapse whitespace'
+  )
   // See https://www.w3.org/TR/html4/struct/text.html#h-9.1
 
   t.end()
@@ -940,35 +976,225 @@ test('whitespace', function (t) {
 test('uppercase tags', function (t) {
   const html = '<0>click <Link>here</Link> for more</0>'
   const parsed = HTML.parse(html)
-  t.deepEqual(parsed, [
-    {
-      "type": "tag",
-      "name": "0",
-      "voidElement": false,
-      "attrs": {},
-      "children": [
-        {
-          "type": "text",
-          "content": "click "
-        },
-        {
-          "type": "tag",
-          "name": "Link",
-          "voidElement": false,
-          "attrs": {},
-          "children": [
-            {
-              "type": "text",
-              "content": "here"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "content": " for more"
-        }
-      ]
-    }
-  ], 'should handle uppercase tags correctly')
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: '0',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'click ',
+          },
+          {
+            type: 'tag',
+            name: 'Link',
+            voidElement: false,
+            attrs: {},
+            children: [
+              {
+                type: 'text',
+                content: 'here',
+              },
+            ],
+          },
+          {
+            type: 'text',
+            content: ' for more',
+          },
+        ],
+      },
+    ],
+    'should handle uppercase tags correctly'
+  )
+  t.end()
+})
+
+test('open tag in html string', function (t) {
+  const html = '<0>hello under <10 <div>under 10</div> ok?</0>'
+  const parsed = HTML.parse(html)
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'tag',
+        name: '0',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'hello under <10 ',
+          },
+          {
+            type: 'tag',
+            name: 'div',
+            voidElement: false,
+            attrs: {},
+            children: [
+              {
+                type: 'text',
+                content: 'under 10',
+              },
+            ],
+          },
+          {
+            type: 'text',
+            content: ' ok?',
+          },
+        ],
+      },
+    ],
+    'should keep text containing < as text content'
+  )
+  t.end()
+})
+
+test('open tag in html string complex', function (t) {
+  const html =
+    'hello <italic>under ten</italic><10 this text after the sign should be rendered<bold>END</bold>'
+  const parsed = HTML.parse(html)
+  t.deepEqual(
+    parsed,
+    [
+      {
+        type: 'text',
+        content: 'hello ',
+      },
+      {
+        type: 'tag',
+        name: 'italic',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'under ten',
+          },
+        ],
+      },
+      {
+        type: 'text',
+        content: '<10 this text after the sign should be rendered',
+      },
+      {
+        type: 'tag',
+        name: 'bold',
+        voidElement: false,
+        attrs: {},
+        children: [
+          {
+            type: 'text',
+            content: 'END',
+          },
+        ],
+      },
+    ],
+    'should treat <10 followed by text as text, not as a tag'
+  )
+  t.end()
+})
+
+test('lt inside quoted attribute values (#67 review)', function (t) {
+  let html = '<div title="1 < 2">Hello</div>'
+  t.deepEqual(
+    HTML.parse(html),
+    [
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: { title: '1 < 2' },
+        voidElement: false,
+        children: [{ type: 'text', content: 'Hello' }],
+      },
+    ],
+    'should keep < inside double-quoted attribute values'
+  )
+  t.equal(HTML.stringify(HTML.parse(html)), html, 'should round-trip')
+
+  html = "<div title='1 < 2'>Hello</div>"
+  t.deepEqual(
+    HTML.parse(html)[0].attrs,
+    { title: '1 < 2' },
+    'should keep < inside single-quoted attribute values'
+  )
+
+  html = '<div title="a > b < c">x</div>'
+  t.deepEqual(
+    HTML.parse(html)[0].attrs,
+    { title: 'a > b < c' },
+    'should keep mixed brackets inside quoted attribute values'
+  )
+
+  html = '<div><!-- a < b -->x</div>'
+  t.deepEqual(
+    HTML.parse(html)[0].children[0],
+    { type: 'comment', comment: ' a < b ' },
+    'should not corrupt comments containing <'
+  )
+  t.end()
+})
+
+test('multiple literal < in text and CRLF attributes (#67 review round 2)', function (t) {
+  let html = '<div>1 < 2 < 3</div>'
+  t.deepEqual(
+    HTML.parse(html)[0].children,
+    [{ type: 'text', content: '1 < 2 < 3' }],
+    'should keep text with multiple literal < intact'
+  )
+  t.equal(HTML.stringify(HTML.parse(html)), html, 'should round-trip')
+
+  t.deepEqual(
+    HTML.parse('<span>x</span>1 < 2 < 3'),
+    [
+      {
+        type: 'tag',
+        name: 'span',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: 'x' }],
+      },
+      { type: 'text', content: '1 < 2 < 3' },
+    ],
+    'should keep trailing text with multiple literal < intact'
+  )
+
+  t.deepEqual(
+    HTML.parse('<div><!-- c -->1 < 2</div>')[0].children,
+    [
+      { type: 'comment', comment: ' c ' },
+      { type: 'text', content: '1 < 2' },
+    ],
+    'should keep text with < after comments intact'
+  )
+
+  t.deepEqual(
+    HTML.parse('<div title="first\r\nsecond">Hello</div>')[0].attrs,
+    { title: 'first\r\nsecond' },
+    'should parse CRLF inside double-quoted attribute values'
+  )
+  t.deepEqual(
+    HTML.parse("<div title='first\r\nsecond'>x</div>")[0].attrs,
+    { title: 'first\r\nsecond' },
+    'should parse CRLF inside single-quoted attribute values'
+  )
+  t.end()
+})
+
+test('pathological split fragments must not crash (#67 fuzz)', function (t) {
+  // the mismatched-bracket split used to produce fragments that parseTag
+  // saw as comments while the walker treated them as open tags
+  t.doesNotThrow(function () {
+    HTML.parse("<a< <!-->'")
+  }, 'split fragment parsing as comment')
+  t.doesNotThrow(function () {
+    HTML.parse("</0><3 a < b <!-- c -->=<div -->'")
+  }, 'fuzzer-found crash input')
+  t.doesNotThrow(function () {
+    HTML.parse('<div>a<b<c<d</div>')
+  }, 'chained stray < runs')
   t.end()
 })
