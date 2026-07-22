@@ -1183,3 +1183,18 @@ test('multiple literal < in text and CRLF attributes (#67 review round 2)', func
   )
   t.end()
 })
+
+test('pathological split fragments must not crash (#67 fuzz)', function (t) {
+  // the mismatched-bracket split used to produce fragments that parseTag
+  // saw as comments while the walker treated them as open tags
+  t.doesNotThrow(function () {
+    HTML.parse("<a< <!-->'")
+  }, 'split fragment parsing as comment')
+  t.doesNotThrow(function () {
+    HTML.parse("</0><3 a < b <!-- c -->=<div -->'")
+  }, 'fuzzer-found crash input')
+  t.doesNotThrow(function () {
+    HTML.parse('<div>a<b<c<d</div>')
+  }, 'chained stray < runs')
+  t.end()
+})

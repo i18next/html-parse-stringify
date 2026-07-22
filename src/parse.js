@@ -54,7 +54,12 @@ export default function parse(html, options) {
         gts++
       }
     }
-    if (lts > gts && secondLt > -1) {
+    // only split when the remainder is itself a valid tag start; otherwise
+    // a fragment like `< <!-->` desyncs the string-level isComment check
+    // from parseTag's name-based comment detection and crashes the walker
+    const validSplit =
+      secondLt > -1 && /[a-zA-Z0-9\-!/]/.test(tag.charAt(secondLt + 1))
+    if (lts > gts && validSplit) {
       const firstPart = tag.substring(0, secondLt)
       const secondPart = tag.substring(firstPart.length)
       matches[i][0] = secondPart
