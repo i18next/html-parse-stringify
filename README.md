@@ -1,6 +1,9 @@
 # html-parse-stringify
 
-> **Note:** development of this package continues at [i18next/html-parse-stringify](https://github.com/i18next/html-parse-stringify), where version 4.x and later are maintained. 3.1.0 is the final release from this repository; the npm package name stays `html-parse-stringify`. See [issue #65](https://github.com/HenrikJoreteg/html-parse-stringify/issues/65) for the background.
+[![CI](https://github.com/i18next/html-parse-stringify/actions/workflows/ci.yml/badge.svg)](https://github.com/i18next/html-parse-stringify/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/html-parse-stringify.svg)](https://www.npmjs.com/package/html-parse-stringify)
+
+> **Maintenance home.** This is the maintained continuation of [HenrikJoreteg/html-parse-stringify](https://github.com/HenrikJoreteg/html-parse-stringify), created by [Henrik Joreteg](https://github.com/HenrikJoreteg). It is maintained by the [i18next](https://github.com/i18next) community (it powers `<Trans>` in react-i18next); see [the original repo's issue #65](https://github.com/HenrikJoreteg/html-parse-stringify/issues/65) for the history. The npm package name is unchanged: `html-parse-stringify`. See [CHANGELOG.md](CHANGELOG.md) for what changed in 4.0.0 and how to migrate.
 
 This is an _experimental lightweight approach_ to enable quickly parsing HTML into an AST and stringify'ing it back to the original string.
 
@@ -32,6 +35,19 @@ But you can't just diff HTML strings, as simple strings, very easily, in order t
 
 This lib does exactly that.
 
+## installation
+
+```bash
+npm install html-parse-stringify
+```
+
+```js
+// ESM
+import HTML, { parse, stringify } from 'html-parse-stringify'
+// CommonJS
+const HTML = require('html-parse-stringify')
+```
+
 It has two methods:
 
 1. parse
@@ -39,7 +55,16 @@ It has two methods:
 
 ## `.parse(htmlString, options)`
 
-Takes a string of HTML and turns it into an AST, the only option you can currently pass is an object of registered `components` whose children will be ignored when generating the AST.
+Takes a string of HTML and turns it into an AST. Two options can be passed in the second argument:
+
+- `components`: an object of registered components; children of these components will be ignored when generating the AST.
+- `allowedTags`: an array of tag names, or a predicate `(name) => boolean`. When set, only tags with these names are parsed as markup; any other tag-shaped input is kept as literal text (useful when parsing user-facing copy where `<div>` may just be text). Comments are always parsed.
+
+```js
+HTML.parse('Use <div> with <b>bold</b>', { allowedTags: ['b'] })
+// -> [ { type: 'text', content: 'Use <div> with ' },
+//      { type: 'tag', name: 'b', ... children: [{ type: 'text', content: 'bold' }] } ]
+```
 
 ## `.stringify(AST)`
 
@@ -50,18 +75,18 @@ Takes an AST and turns it back into a string of HTML.
 See comments in the following example:
 
 ```js
-var HTML = require('html-parse-stringify')
+import HTML from 'html-parse-stringify'
 
 // this html:
-var html = '<div class="oh"><p>hi</p></div>'
+const html = '<div class="oh"><p>hi</p></div>'
 
 // becomes this AST:
-var ast = HTML.parse(html)
+const ast = HTML.parse(html)
 
 console.log(ast)
 /*
 {
-    // can be `tag`, `text` or `component`
+    // can be `tag`, `text`, `comment` or `component`
     type: 'tag',
 
     // name of tag if relevant
@@ -110,7 +135,7 @@ properties:
 
 - `type` - will always be `tag` for this type of node
 - `name` - tag name, such as 'div'
-- `attrs` - an object of key/value pairs. If an attribute has multiple space-separated items such as classes, they'll still be in a single string, for example: `class: "class1 class2"`
+- `attrs` - an object of key/value pairs. If an attribute has multiple space-separated items such as classes, they'll still be in a single string, for example: `class: "class1 class2"`. Boolean attributes (like `disabled`) have the value `null`.
 - `voidElement` - `true` or `false`. Whether this tag is a known void element as defined by [spec](http://www.w3.org/html/wg/drafts/html/master/syntax.html#void-elements).
 - `children` - array of child nodes. Note that any continuous string of text is a text node child, see below.
 
@@ -121,7 +146,14 @@ properties:
 - `type` - will always be `text` for this type of node
 - `content` - text content of the node
 
-### 3. component
+### 3. comment
+
+properties:
+
+- `type` - will always be `comment` for this type of node
+- `comment` - the comment's content
+
+### 4. component
 
 If you pass an object of `components` as part of the `options` object passed as the second argument to `.parse()` then the AST won't keep parsing that branch of the DOM tree when it one of those registered components.
 
@@ -137,20 +169,13 @@ properties:
 
 ## changelog
 
-- `3.1.0` Maintenance release, merging long-standing community PRs: LICENSE file shipped in the npm package (#66 by @monholm, closes #61), text containing `<` no longer truncated (#64, closes #59), multi-line attribute values (#63 by @steffanhalv, closes #62), TypeScript declaration shipped and improved (#51/#52 by @jiangfengming, closes #56), text after comment nodes no longer discarded (#53 by @tohosaku). Development continues at [i18next/html-parse-stringify](https://github.com/i18next/html-parse-stringify).
-- `3.0.1` Merged #47 which makes void elements check case insensitive. Thanks again, [@adrai](https://github.com/adrai) for this contribution!
-- `3.0.0` Merged #46 which fixed an issue with handling of whitespace. Doing major version bump since this changes behavior if you have whitespace only nodes (see merged PR and #45 for more details). Thanks [@adrai](https://github.com/adrai) for this contribution!
-- `2.1.1` Merged #41 which fixed an issue with tag nesting. Thanks [@ericponto](https://github.com/ericponto).
-- `2.1.0` Merged support for numeric tags. This allows a use case described in [this PR](https://github.com/HenrikJoreteg/html-parse-stringify/pull/43). Thanks [@kachkaev](https://github.com/kachkaev).
-- `2.0.3` Fixed failed publish. Accidentally published an empty package :sweat_smile:
-- `2.0.2` Fixed incorrect attribution for vulnerability disclosure. The vulnerability was discovered by Yeting Li. Sam Sanoop was the one who reached out to me about it.
-- `2.0.1` Addressing a reported regular expression denial of service issue found by [Yeting Li](https://github.com/yetingli) and reported to me by [Sam Sanoop](https://twitter.com/snoopysecurity) of [Snyk](https://snyk.io/) THANK YOU!. The issue was that sending certain input would cause one of the regular expressions we used to lock up and not finish, freezing the process. See the test that was added for details. To be clear, this lib wasn't meant for parsing non-well formed HTML. But, better safe than sorry! So we're fixing it.
-- `2.0.0` updated to more modern dependencies/build system. Switched to prettier, etc. No big feature differences, just new build system/project structure. Added support for top level text nodes thanks to @jperl. Added support for comments thanks to @pconerly.
-- `1.0.0 - 1.0.3` no big changes, bug fixes and speed improvements.
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## credits
 
 If this sounds interesting you should probably follow [@HenrikJoreteg](https://twitter.com/henrikjoreteg) and [@Philip_Roberts](https://twitter.com/philip_roberts) on twitter to see how this all turns out.
+
+This package was created by [Henrik Joreteg](https://github.com/HenrikJoreteg) and is now maintained by the [i18next](https://github.com/i18next) community. Maintenance is sponsored by [Locize](https://www.locize.com?utm_source=html_parse_stringify_readme&utm_medium=github), the localization platform built by the team behind i18next.
 
 ## license
 

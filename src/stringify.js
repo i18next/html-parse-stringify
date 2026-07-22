@@ -1,7 +1,14 @@
 function attrString(attrs) {
   const buff = []
-  for (let key in attrs) {
-    buff.push(key + '="' + attrs[key] + '"')
+  for (const key in attrs) {
+    if (attrs[key] === null) {
+      // boolean attribute, render bare
+      buff.push(key)
+    } else {
+      // escape double quotes so values parsed from single-quoted or
+      // multiline attributes can't break out of the generated markup
+      buff.push(key + '="' + String(attrs[key]).replace(/"/g, '&quot;') + '"')
+    }
   }
   if (!buff.length) {
     return ''
@@ -9,28 +16,30 @@ function attrString(attrs) {
   return ' ' + buff.join(' ')
 }
 
-function stringify(buff, doc) {
+function stringifyNode(buff, doc) {
   switch (doc.type) {
     case 'text':
       return buff + doc.content
-    case 'tag':
-      buff +=
-        '<' +
-        doc.name +
-        (doc.attrs ? attrString(doc.attrs) : '') +
-        (doc.voidElement ? '/>' : '>')
+    case 'tag': {
+      // a doctype is void but must not self-close: `<!DOCTYPE html>` not `<!DOCTYPE html/>`
+      const tagEnd =
+        doc.voidElement && doc.name.toLowerCase() !== '!doctype' ? '/>' : '>'
+      buff += '<' + doc.name + (doc.attrs ? attrString(doc.attrs) : '') + tagEnd
       if (doc.voidElement) {
         return buff
       }
-      return buff + doc.children.reduce(stringify, '') + '</' + doc.name + '>'
+      return (
+        buff + doc.children.reduce(stringifyNode, '') + '</' + doc.name + '>'
+      )
+    }
     case 'comment':
       buff += '<!--' + doc.comment + '-->'
       return buff
   }
 }
 
-export default function (doc) {
+export default function stringify(doc) {
   return doc.reduce(function (token, rootEl) {
-    return token + stringify('', rootEl)
+    return token + stringifyNode('', rootEl)
   }, '')
 }

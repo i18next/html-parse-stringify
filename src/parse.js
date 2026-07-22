@@ -1,23 +1,77 @@
 import parseTag from './parse-tag'
 
-const tagRE = /<[a-zA-Z0-9\-\!\/](?:"[^"]*"|'[^']*'|[^'">])*>/g
+// comments are matched as a whole (so `>` inside them is fine), everything
+// else tag-shaped is matched by the second alternative
+const tagRE = /<!--[\s\S]*?-->|<[a-zA-Z0-9\-!/](?:"[^"]*"|'[^']*'|[^'">])*>/g
+const tagNameRE = /<\/?([^\s]+?)[/\s>]/
 const whitespaceRE = /^\s*$/
+// tags whose content is raw text: nothing inside them is markup
+const rawTextRE = /^(script|style)$/i
+
+// placeholder for `<` of tags rejected by options.allowedTags; restored to a
+// literal `<` in text/attr/comment content after parsing (U+0000 cannot appear
+// in sane input, and a collision would merely render as an extra `<`)
+const sentinel = '\u0000'
 
 // re-used obj for quick lookups of components
 const empty = Object.create(null)
 
+function restoreSentinels(nodes) {
+  nodes.forEach(function (node) {
+    if (node.type === 'text') {
+      node.content = node.content.split(sentinel).join('<')
+      return
+    }
+    if (node.type === 'comment') {
+      node.comment = node.comment.split(sentinel).join('<')
+      return
+    }
+    for (const key in node.attrs) {
+      const value = node.attrs[key]
+      if (typeof value === 'string' && value.indexOf(sentinel) > -1) {
+        node.attrs[key] = value.split(sentinel).join('<')
+      }
+    }
+    if (node.children.length) {
+      restoreSentinels(node.children)
+    }
+  })
+}
+
 export default function parse(html, options) {
-  options || (options = {})
-  options.components || (options.components = empty)
+  const components = (options && options.components) || empty
+  const allowedTags = options && options.allowedTags
+  let restoreNeeded = false
+  if (allowedTags) {
+    const isAllowed =
+      typeof allowedTags === 'function'
+        ? allowedTags
+        : function (name) {
+            return allowedTags.indexOf(name) > -1
+          }
+    // neutralize tags whose name is not allowed, so they parse as text
+    html = html.replace(tagRE, function (tag) {
+      if (tag.startsWith('<!--')) return tag
+      const nameMatch = tag.match(tagNameRE)
+      if (nameMatch && isAllowed(nameMatch[1])) return tag
+      restoreNeeded = true
+      return tag.split('<').join(sentinel)
+    })
+  }
   const result = []
   const arr = []
   let current
   let level = -1
   let inComponent = false
+  // while parsing raw-text content (script/style), tag-looking matches
+  // before this index belong to the content and must be skipped
+  let rawUntil = 0
+  // lazily created lowercase copy for case-insensitive raw-text close-tag search
+  let htmlLower
 
   // handle text at top level
   if (html.indexOf('<') !== 0) {
-    var end = html.indexOf('<')
+    const end = html.indexOf('<')
     result.push({
       type: 'text',
       content: end === -1 ? html : html.substring(0, end),
@@ -33,7 +87,8 @@ export default function parse(html, options) {
   matches.forEach(function (match, i) {
     const tag = match[0]
     if (!tag) return
-    // comments are handled by parseTag as a whole
+    // comments match as a whole; their content must not trigger the
+    // mismatched-bracket split below
     if (tag.startsWith('<!--')) return
     // count brackets outside quoted attribute values, so `<` inside an
     // attribute (e.g. title="1 < 2") can't trigger a bogus split
@@ -70,6 +125,7 @@ export default function parse(html, options) {
     const tag = match[0]
     if (!tag) return
     const index = match.index
+    if (index < rawUntil) return
     if (inComponent) {
       if (tag !== '</' + current.name + '>') {
         return
@@ -115,14 +171,40 @@ export default function parse(html, options) {
       level++
 
       current = parseTag(tag)
-      if (current.type === 'tag' && options.components[current.name]) {
+      if (current.type === 'tag' && components[current.name]) {
         current.type = 'component'
         inComponent = true
+      }
+
+      let isRawText = false
+      if (
+        !inComponent &&
+        !current.voidElement &&
+        rawTextRE.test(current.name)
+      ) {
+        // raw-text element: everything up to the matching close tag is one
+        // text child, regardless of what it looks like
+        isRawText = true
+        htmlLower || (htmlLower = html.toLowerCase())
+        const closeIndex = htmlLower.indexOf(
+          '</' + current.name.toLowerCase() + '>',
+          start,
+        )
+        const contentEnd = closeIndex === -1 ? html.length : closeIndex
+        const content = html.slice(start, contentEnd)
+        if (content) {
+          current.children.push({
+            type: 'text',
+            content,
+          })
+        }
+        rawUntil = contentEnd
       }
 
       if (
         !current.voidElement &&
         !inComponent &&
+        !isRawText &&
         nextChar &&
         nextChar !== '<'
       ) {
@@ -179,12 +261,16 @@ export default function parse(html, options) {
         if ((end > -1 && level + parent.length >= 0) || content !== ' ') {
           parent.push({
             type: 'text',
-            content: content,
+            content,
           })
         }
       }
     }
   })
+
+  if (restoreNeeded) {
+    restoreSentinels(result)
+  }
 
   return result
 }

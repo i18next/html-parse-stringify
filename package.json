@@ -1,52 +1,72 @@
 {
   "name": "html-parse-stringify",
   "description": "Parses well-formed HTML (meaning all tags closed) into an AST and back. quickly.",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "author": "Henrik Joreteg <henrik@joreteg.com>",
-  "bugs": {
-    "url": "https://github.com/henrikjoreteg/html-parse-stringify/issues"
-  },
-  "dependencies": {
-    "void-elements": "3.1.0"
-  },
-  "devDependencies": {
-    "esm": "3.2.25",
-    "microbundle": "0.12.2",
-    "prettier": "2.0.5",
-    "tap-spec": "2.1.2",
-    "tape": "5.0.1"
-  },
-  "files": [
-    "dist",
-    "html-parse-stringify.d.ts"
+  "contributors": [
+    "Adriano Raiano <adriano@raiano.ch>"
   ],
-  "homepage": "https://github.com/henrikjoreteg/html-parse-stringify",
+  "license": "MIT",
+  "homepage": "https://github.com/i18next/html-parse-stringify",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/i18next/html-parse-stringify.git"
+  },
+  "bugs": {
+    "url": "https://github.com/i18next/html-parse-stringify/issues"
+  },
+  "funding": "https://locize.com",
   "keywords": [
     "ast",
     "html",
     "parse",
     "stringify"
   ],
-  "license": "MIT",
-  "main": "dist/html-parse-stringify.js",
-  "module": "dist/html-parse-stringify.module.js",
+  "main": "./dist/cjs/html-parse-stringify.js",
+  "module": "./dist/esm/html-parse-stringify.js",
+  "types": "./index.d.ts",
+  "unpkg": "./dist/umd/html-parse-stringify.min.js",
   "source": "src/index.js",
-  "unpkg": "dist/html-parse-stringify.umd.js",
-  "types": "html-parse-stringify.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./index.d.mts",
+        "default": "./dist/esm/html-parse-stringify.js"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./dist/cjs/html-parse-stringify.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "index.d.ts",
+    "index.d.mts"
+  ],
+  "scripts": {
+    "lint": "eslint src test",
+    "format": "prettier \"{src,test}/**/*.js\" \"*.{json,md,mjs}\" --check",
+    "format:fix": "prettier \"{src,test}/**/*.js\" \"*.{json,md,mjs}\" --write",
+    "test": "vitest --run",
+    "build": "rimraf dist && rollup -c && node -e \"require('fs').writeFileSync('dist/esm/package.json', JSON.stringify({ type: 'module' }))\"",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "preversion": "npm run lint && npm run test && npm run build && git push",
+    "postversion": "git push && git push --tags"
+  },
   "prettier": {
     "arrowParens": "avoid",
     "singleQuote": true,
     "semi": false
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/henrikjoreteg/html-parse-stringify"
-  },
-  "scripts": {
-    "build": "microbundle",
-    "format": "prettier --write .",
-    "prebuild": "rm -rf dist",
-    "prepublish": "npm run build",
-    "test": "tape -r esm test/* | tap-spec"
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "eslint": "^9.30.0",
+    "neostandard": "^0.12.0",
+    "prettier": "^3.6.0",
+    "rimraf": "^6.0.0",
+    "rollup": "^4.44.0",
+    "vitest": "^4.1.2"
   }
 }

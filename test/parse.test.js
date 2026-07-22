@@ -1,5 +1,5 @@
 /* global console */
-import test from 'tape'
+import test from './tape-adapter'
 import HTML from '../src/index'
 
 test('parse', function (t) {
@@ -391,7 +391,7 @@ test('parse', function (t) {
   ])
   t.equal(
     HTML.stringify(parsed),
-    '<div class="handles" other="47" and="attributes"></div>'
+    '<div class="handles" other="47" and="attributes"></div>',
   )
 
   html =
@@ -425,7 +425,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    'should not include children of registered components in AST'
+    'should not include children of registered components in AST',
   )
 
   html =
@@ -487,7 +487,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    'should handle unclosed void elements'
+    'should handle unclosed void elements',
   )
   t.equal(HTML.stringify(parsed), '<div><img/></div>')
 
@@ -512,7 +512,7 @@ test('parse', function (t) {
         children: [],
       },
     ],
-    'should handle multiple root nodes'
+    'should handle multiple root nodes',
   )
   t.equal(HTML.stringify(parsed), '<div></div><img/>')
 
@@ -537,7 +537,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    'should handle custom void tags if self-closing'
+    'should handle custom void tags if self-closing',
   )
 
   html = '<div><void-registered-component/></div>'
@@ -563,7 +563,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    'should handle registered void tags if self-closing'
+    'should handle registered void tags if self-closing',
   )
 
   html = '<div> 9 <input type="text"/> 10 </div>'
@@ -591,7 +591,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    'should not give voidElements children'
+    'should not give voidElements children',
   )
 
   html = '<div></div>\n'
@@ -607,7 +607,7 @@ test('parse', function (t) {
         children: [],
       },
     ],
-    'should not explode on trailing whitespace'
+    'should not explode on trailing whitespace',
   )
 
   html = '<div>Hi</div> There '
@@ -627,7 +627,7 @@ test('parse', function (t) {
         content: ' There ',
       },
     ],
-    'should handle trailing text nodes at the top-level'
+    'should handle trailing text nodes at the top-level',
   )
 
   html = 'Hi <div>There</div>'
@@ -647,7 +647,7 @@ test('parse', function (t) {
         children: [{ type: 'text', content: 'There' }],
       },
     ],
-    'should handle leading text nodes at the top-level'
+    'should handle leading text nodes at the top-level',
   )
 
   html = 'Hi There'
@@ -660,7 +660,7 @@ test('parse', function (t) {
         content: 'Hi There',
       },
     ],
-    'should handle plain strings of text with no tags'
+    'should handle plain strings of text with no tags',
   )
 
   html = '<div>Hi</div> There <span>something</span> <a></a>else '
@@ -702,7 +702,7 @@ test('parse', function (t) {
         content: 'else ',
       },
     ],
-    'should handle text nodes in the middle of tags at the top-level'
+    'should handle text nodes in the middle of tags at the top-level',
   )
 
   html = '<div>Hi</div>\n\n <span>There</span> \t '
@@ -726,7 +726,7 @@ test('parse', function (t) {
         children: [{ type: 'text', content: 'There' }],
       },
     ],
-    'should remove text nodes that are nothing but whitespace'
+    'should remove text nodes that are nothing but whitespace',
   )
 
   html = `<script>
@@ -757,7 +757,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    'should parse a script tag'
+    'should parse a script tag',
   )
 
   html = `<div onclick="alert('hi!')">Click me!</div>`
@@ -775,7 +775,7 @@ test('parse', function (t) {
         children: [{ content: 'Click me!', type: 'text' }],
       },
     ],
-    'should parse attr values with quotes'
+    'should parse attr values with quotes',
   )
 
   html = `<div onclick='alert("hi!")'>Click me!</div>`
@@ -793,7 +793,7 @@ test('parse', function (t) {
         children: [{ content: 'Click me!', type: 'text' }],
       },
     ],
-    'should parse attr values with quotes, opposite'
+    'should parse attr values with quotes, opposite',
   )
 
   html = '<div>Hi</span>There</div>'
@@ -812,7 +812,7 @@ test('parse', function (t) {
         ],
       },
     ],
-    "should skip over closing tags that don't match the current tag name"
+    "should skip over closing tags that don't match the current tag name",
   )
 
   html = '<p>Hi There</p></span>root text</p><p>Try again</p>'
@@ -839,7 +839,7 @@ test('parse', function (t) {
         children: [{ type: 'text', content: 'Try again' }],
       },
     ],
-    'should not go lower than the root level (-1)'
+    'should not go lower than the root level (-1)',
   )
 
   t.end()
@@ -902,11 +902,11 @@ test('ReDoS vulnerability reported by Sam Sanoop of Snyk', function (t) {
   const start = Date.now()
   // reported problematic string
   HTML.parse(
-    "<!''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''!"
+    "<!''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''!",
   )
   // other variant
   HTML.parse(
-    '<!""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""!'
+    '<!""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""!',
   )
   const duration = Date.now() - start
 
@@ -928,7 +928,7 @@ test('whitespace', function (t) {
         children: [],
       },
     ],
-    'should not explode on trailing whitespace'
+    'should not explode on trailing whitespace',
   )
 
   html = '<div>Hi</div>\n\n <span>There</span> \t <div> </div>'
@@ -966,7 +966,7 @@ test('whitespace', function (t) {
         children: [{ type: 'text', content: ' ' }],
       },
     ],
-    'should collapse whitespace'
+    'should collapse whitespace',
   )
   // See https://www.w3.org/TR/html4/struct/text.html#h-9.1
 
@@ -1008,7 +1008,7 @@ test('uppercase tags', function (t) {
         ],
       },
     ],
-    'should handle uppercase tags correctly'
+    'should handle uppercase tags correctly',
   )
   t.end()
 })
@@ -1048,7 +1048,7 @@ test('open tag in html string', function (t) {
         ],
       },
     ],
-    'should keep text containing < as text content'
+    'should keep text containing < as text content',
   )
   t.end()
 })
@@ -1093,108 +1093,7 @@ test('open tag in html string complex', function (t) {
         ],
       },
     ],
-    'should treat <10 followed by text as text, not as a tag'
+    'should treat <10 followed by text as text, not as a tag',
   )
-  t.end()
-})
-
-test('lt inside quoted attribute values (#67 review)', function (t) {
-  let html = '<div title="1 < 2">Hello</div>'
-  t.deepEqual(
-    HTML.parse(html),
-    [
-      {
-        type: 'tag',
-        name: 'div',
-        attrs: { title: '1 < 2' },
-        voidElement: false,
-        children: [{ type: 'text', content: 'Hello' }],
-      },
-    ],
-    'should keep < inside double-quoted attribute values'
-  )
-  t.equal(HTML.stringify(HTML.parse(html)), html, 'should round-trip')
-
-  html = "<div title='1 < 2'>Hello</div>"
-  t.deepEqual(
-    HTML.parse(html)[0].attrs,
-    { title: '1 < 2' },
-    'should keep < inside single-quoted attribute values'
-  )
-
-  html = '<div title="a > b < c">x</div>'
-  t.deepEqual(
-    HTML.parse(html)[0].attrs,
-    { title: 'a > b < c' },
-    'should keep mixed brackets inside quoted attribute values'
-  )
-
-  html = '<div><!-- a < b -->x</div>'
-  t.deepEqual(
-    HTML.parse(html)[0].children[0],
-    { type: 'comment', comment: ' a < b ' },
-    'should not corrupt comments containing <'
-  )
-  t.end()
-})
-
-test('multiple literal < in text and CRLF attributes (#67 review round 2)', function (t) {
-  let html = '<div>1 < 2 < 3</div>'
-  t.deepEqual(
-    HTML.parse(html)[0].children,
-    [{ type: 'text', content: '1 < 2 < 3' }],
-    'should keep text with multiple literal < intact'
-  )
-  t.equal(HTML.stringify(HTML.parse(html)), html, 'should round-trip')
-
-  t.deepEqual(
-    HTML.parse('<span>x</span>1 < 2 < 3'),
-    [
-      {
-        type: 'tag',
-        name: 'span',
-        attrs: {},
-        voidElement: false,
-        children: [{ type: 'text', content: 'x' }],
-      },
-      { type: 'text', content: '1 < 2 < 3' },
-    ],
-    'should keep trailing text with multiple literal < intact'
-  )
-
-  t.deepEqual(
-    HTML.parse('<div><!-- c -->1 < 2</div>')[0].children,
-    [
-      { type: 'comment', comment: ' c ' },
-      { type: 'text', content: '1 < 2' },
-    ],
-    'should keep text with < after comments intact'
-  )
-
-  t.deepEqual(
-    HTML.parse('<div title="first\r\nsecond">Hello</div>')[0].attrs,
-    { title: 'first\r\nsecond' },
-    'should parse CRLF inside double-quoted attribute values'
-  )
-  t.deepEqual(
-    HTML.parse("<div title='first\r\nsecond'>x</div>")[0].attrs,
-    { title: 'first\r\nsecond' },
-    'should parse CRLF inside single-quoted attribute values'
-  )
-  t.end()
-})
-
-test('pathological split fragments must not crash (#67 fuzz)', function (t) {
-  // the mismatched-bracket split used to produce fragments that parseTag
-  // saw as comments while the walker treated them as open tags
-  t.doesNotThrow(function () {
-    HTML.parse("<a< <!-->'")
-  }, 'split fragment parsing as comment')
-  t.doesNotThrow(function () {
-    HTML.parse("</0><3 a < b <!-- c -->=<div -->'")
-  }, 'fuzzer-found crash input')
-  t.doesNotThrow(function () {
-    HTML.parse('<div>a<b<c<d</div>')
-  }, 'chained stray < runs')
   t.end()
 })

@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format
+      - run: npm test
+      - run: npm run build
+
+  react-i18next:
+    # the biggest consumer: its full test suite must pass against this parser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm pack
+      - uses: actions/checkout@v4
+        with:
+          repository: i18next/react-i18next
+          path: react-i18next
+      - run: |
+          cd react-i18next
+          npm install
+          npm install ../html-parse-stringify-*.tgz
+          npx vitest --run

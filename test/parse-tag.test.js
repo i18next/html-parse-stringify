@@ -1,4 +1,4 @@
-import test from 'tape'
+import test from './tape-adapter'
 import parseTag from '../src/parse-tag'
 
 test('parseTag', function (t) {
@@ -71,7 +71,7 @@ test('parseTag', function (t) {
       voidElement: false,
       children: [],
     },
-    'should parse tags containing attributes with hyphens and/or colons'
+    'should parse tags containing attributes with hyphens and/or colons',
   )
 
   t.end()

@@ -1,7 +1,28 @@
-import lookup from 'void-elements'
+// inlined from the former `void-elements` dependency, so the package has
+// zero runtime dependencies. `!doctype`/`!DOCTYPE` are treated as void so a
+// doctype parses as a childless node instead of swallowing the document.
+const voidElements = {
+  area: true,
+  base: true,
+  br: true,
+  col: true,
+  embed: true,
+  hr: true,
+  img: true,
+  input: true,
+  link: true,
+  meta: true,
+  param: true,
+  source: true,
+  track: true,
+  wbr: true,
+  '!doctype': true,
+  '!DOCTYPE': true,
+}
+
 const attrRE = /\s([^'"/\s><]+?)[\s/>]|([^\s=]+)=\s?("[^"]*"|'[^']*')/g
 
-export default function stringify(tag) {
+export default function parseTag(tag) {
   const res = {
     type: 'tag',
     name: '',
@@ -13,7 +34,9 @@ export default function stringify(tag) {
   const tagMatch = tag.match(/<\/?([^\s]+?)[/\s>]/)
   if (tagMatch) {
     res.name = tagMatch[1]
-    if (lookup[tagMatch[1]] || tag.charAt(tag.length - 2) === '/') {
+    // void-element lookup stays case sensitive on purpose: react-i18next
+    // relies on `<Br>` NOT being treated as a void `<br>` (see 1df0f9d)
+    if (voidElements[tagMatch[1]] || tag.charAt(tag.length - 2) === '/') {
       res.voidElement = true
     }
 
@@ -42,10 +65,14 @@ export default function stringify(tag) {
 
     if (result[1]) {
       const attr = result[1].trim()
-      let arr = [attr, '']
+      // boolean attributes carry `null` so stringify can render them bare
+      // (`<input disabled/>` instead of `<input disabled=""/>`)
+      let arr = [attr, null]
 
-      if (attr.indexOf('=') > -1) {
-        arr = attr.split('=')
+      const eq = attr.indexOf('=')
+      if (eq > -1) {
+        // split at the first `=` only, so `data-x=a=b` keeps its full value
+        arr = [attr.slice(0, eq), attr.slice(eq + 1)]
       }
 
       res.attrs[arr[0]] = arr[1]
