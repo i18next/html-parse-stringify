@@ -1,5 +1,5 @@
 import lookup from 'void-elements'
-const attrRE = /\s([^'"/\s><]+?)[\s/>]|([^\s=]+)=\s?("(.|\n)*?"|'(.|\n)*?')/g
+const attrRE = /\s([^'"/\s><]+?)[\s/>]|([^\s=]+)=\s?("[^"]*"|'[^']*')/g
 
 export default function stringify(tag) {
   const res = {

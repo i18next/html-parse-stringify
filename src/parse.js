@@ -96,7 +96,7 @@ export default function parse(html, options) {
       parent = arr[level]
       parent.children.push(comment)
 
-      const text = html.slice(start, html.indexOf('<', start))
+      const text = html.slice(start, nextMatch ? nextMatch.index : undefined)
       if (text.length > 0) {
         parent.children.push({
           type: 'text',
@@ -121,21 +121,11 @@ export default function parse(html, options) {
         nextChar &&
         nextChar !== '<'
       ) {
-        let possibleContent = html.slice(start, html.indexOf('<', start))
-        const indexOfPossibleContent = html.indexOf(possibleContent, start)
-        const startAfterPossibleContent =
-          indexOfPossibleContent + possibleContent.length + 1
-        const nextLt = html.indexOf('<', startAfterPossibleContent)
-        const nextGt = html.indexOf('>', startAfterPossibleContent)
-        if (nextLt > -1 && nextLt < nextGt) {
-          possibleContent = html.slice(
-            start,
-            html.indexOf('<', startAfterPossibleContent)
-          )
-        }
+        // text content runs to the next actual tag match; stray `<`
+        // characters in between are part of the text
         current.children.push({
           type: 'text',
-          content: possibleContent,
+          content: html.slice(start, nextMatch ? nextMatch.index : undefined),
         })
       }
 
@@ -168,13 +158,9 @@ export default function parse(html, options) {
         // a child to the current node.
         parent = level === -1 ? result : arr[level].children
 
-        // calculate correct end of the content slice in case there's
-        // no tag after the text node.
-        let end = html.indexOf('<', start)
-        if (isText) {
-          const nextTag = html.substring(nextMatch.index)
-          end = html.indexOf(nextTag, start)
-        }
+        // the text node runs to the next actual tag match; -1 means
+        // there's no tag after it (trailing text)
+        const end = nextMatch ? nextMatch.index : -1
         let content = html.slice(start, end === -1 ? undefined : end)
         // if a node is nothing but whitespace, collapse it as the spec states:
         // https://www.w3.org/TR/html4/struct/text.html#h-9.1

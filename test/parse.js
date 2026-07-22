@@ -1137,3 +1137,49 @@ test('lt inside quoted attribute values (#67 review)', function (t) {
   )
   t.end()
 })
+
+test('multiple literal < in text and CRLF attributes (#67 review round 2)', function (t) {
+  let html = '<div>1 < 2 < 3</div>'
+  t.deepEqual(
+    HTML.parse(html)[0].children,
+    [{ type: 'text', content: '1 < 2 < 3' }],
+    'should keep text with multiple literal < intact'
+  )
+  t.equal(HTML.stringify(HTML.parse(html)), html, 'should round-trip')
+
+  t.deepEqual(
+    HTML.parse('<span>x</span>1 < 2 < 3'),
+    [
+      {
+        type: 'tag',
+        name: 'span',
+        attrs: {},
+        voidElement: false,
+        children: [{ type: 'text', content: 'x' }],
+      },
+      { type: 'text', content: '1 < 2 < 3' },
+    ],
+    'should keep trailing text with multiple literal < intact'
+  )
+
+  t.deepEqual(
+    HTML.parse('<div><!-- c -->1 < 2</div>')[0].children,
+    [
+      { type: 'comment', comment: ' c ' },
+      { type: 'text', content: '1 < 2' },
+    ],
+    'should keep text with < after comments intact'
+  )
+
+  t.deepEqual(
+    HTML.parse('<div title="first\r\nsecond">Hello</div>')[0].attrs,
+    { title: 'first\r\nsecond' },
+    'should parse CRLF inside double-quoted attribute values'
+  )
+  t.deepEqual(
+    HTML.parse("<div title='first\r\nsecond'>x</div>")[0].attrs,
+    { title: 'first\r\nsecond' },
+    'should parse CRLF inside single-quoted attribute values'
+  )
+  t.end()
+})
