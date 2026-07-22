@@ -33,10 +33,29 @@ export default function parse(html, options) {
   matches.forEach(function (match, i) {
     const tag = match[0]
     if (!tag) return
-    const amountOfLts = tag.split('<').length
-    const amountOfGts = tag.split('>').length
-    if (amountOfLts > 0 && amountOfLts > amountOfGts) {
-      const firstPart = tag.substring(0, tag.indexOf('<', tag.indexOf('<') + 1))
+    // comments are handled by parseTag as a whole
+    if (tag.startsWith('<!--')) return
+    // count brackets outside quoted attribute values, so `<` inside an
+    // attribute (e.g. title="1 < 2") can't trigger a bogus split
+    let lts = 0
+    let gts = 0
+    let secondLt = -1
+    let quote = null
+    for (let j = 0; j < tag.length; j++) {
+      const c = tag.charAt(j)
+      if (quote) {
+        if (c === quote) quote = null
+      } else if (c === '"' || c === "'") {
+        quote = c
+      } else if (c === '<') {
+        lts++
+        if (lts === 2) secondLt = j
+      } else if (c === '>') {
+        gts++
+      }
+    }
+    if (lts > gts && secondLt > -1) {
+      const firstPart = tag.substring(0, secondLt)
       const secondPart = tag.substring(firstPart.length)
       matches[i][0] = secondPart
       matches[i].index += firstPart.length

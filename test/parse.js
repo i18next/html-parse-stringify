@@ -1097,3 +1097,43 @@ test('open tag in html string complex', function (t) {
   )
   t.end()
 })
+
+test('lt inside quoted attribute values (#67 review)', function (t) {
+  let html = '<div title="1 < 2">Hello</div>'
+  t.deepEqual(
+    HTML.parse(html),
+    [
+      {
+        type: 'tag',
+        name: 'div',
+        attrs: { title: '1 < 2' },
+        voidElement: false,
+        children: [{ type: 'text', content: 'Hello' }],
+      },
+    ],
+    'should keep < inside double-quoted attribute values'
+  )
+  t.equal(HTML.stringify(HTML.parse(html)), html, 'should round-trip')
+
+  html = "<div title='1 < 2'>Hello</div>"
+  t.deepEqual(
+    HTML.parse(html)[0].attrs,
+    { title: '1 < 2' },
+    'should keep < inside single-quoted attribute values'
+  )
+
+  html = '<div title="a > b < c">x</div>'
+  t.deepEqual(
+    HTML.parse(html)[0].attrs,
+    { title: 'a > b < c' },
+    'should keep mixed brackets inside quoted attribute values'
+  )
+
+  html = '<div><!-- a < b -->x</div>'
+  t.deepEqual(
+    HTML.parse(html)[0].children[0],
+    { type: 'comment', comment: ' a < b ' },
+    'should not corrupt comments containing <'
+  )
+  t.end()
+})
